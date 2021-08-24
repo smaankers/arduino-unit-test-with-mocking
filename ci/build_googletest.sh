@@ -1,23 +1,23 @@
 #!/bin/bash
 
 script_name=$0
-project_root_dir=$(dirname "${script_name}")/..
+project_root_dir=$(dirname "$0")/../target/dependencies/googletest
 
 pushd $project_root_dir
 project_root_dir_absolute=$(pwd)
-architecture=$(gcc -print-multiarch)-gcc-$(gcc --version | head -n1 | cut -d" " -f4)
-dir_absolute_googletest_source=$project_root_dir_absolute/target/dependencies/googletest
-dir_absolute_googletest_build=$project_root_dir_absolute/target/dependencies/googletest/build
-dir_absolute_googletest_export=$project_root_dir_absolute/target/export/${architecture}/googletest
 
-if [ -d "$dir_absolute_googletest_export" ]; then
+if [ -d "$project_root_dir_absolute/target/export" ]; then
   echo "Note: googletest already built, skipping..."
   exit 0
 fi
 
+# git clean
+git clean -fdx
+git reset --hard
+
 # cleanup
-rm -rf   "$dir_absolute_googletest_build" "$dir_absolute_googletest_export"
-mkdir -p "$dir_absolute_googletest_build" "$dir_absolute_googletest_export"
+rm -rf target
+mkdir -p target/export
 
 # calculate number of cores
 cores=$(nproc --all)
@@ -41,9 +41,9 @@ echo total memory: $memory_kb kb
 echo using $max_jobs jobs to build
 
 # build
-pushd $dir_absolute_googletest_build
+pushd target
 
-  cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX:PATH=$dir_absolute_googletest_export -G Ninja ".."
+  cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX:PATH=$project_root_dir_absolute/target/export -G Ninja ".."
   rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 
   ninja -j$max_jobs all
@@ -53,4 +53,5 @@ pushd $dir_absolute_googletest_build
   rc=$?; if [[ $rc != 0 ]]; then exit $rc; fi
 
 popd
+
 popd

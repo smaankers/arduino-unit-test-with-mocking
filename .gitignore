@@ -1,3 +1,4 @@
 /target
 /cmake-build-*
 /.idea
+package-src-*.zip
